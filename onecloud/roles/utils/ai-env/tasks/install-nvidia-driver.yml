@@ -86,12 +86,27 @@
   become: true
   register: grub_iommu_removed
 
-- name: 重新生成 grub 配置
-  shell: grub2-mkconfig > /boot/efi/EFI/openEuler/grub.cfg
+- name: 检测 GRUB 配置文件路径（RedHat）
+  shell: |
+    find /boot/efi/EFI -name grub.cfg -maxdepth 2 2>/dev/null | head -1 || echo "/boot/grub2/grub.cfg"
+  register: grub_cfg_path_nvidia_driver
+  changed_when: false
+  become: true
+  when: (grub_vfio_removed.changed or grub_iommu_removed.changed) and ansible_os_family == "RedHat"
+
+- name: 重新生成 grub 配置（RedHat）
+  shell: grub2-mkconfig -o {{ grub_cfg_path_nvidia_driver.stdout | trim }}
   become: true
   args:
     executable: /bin/bash
-  when: grub_vfio_removed.changed or grub_iommu_removed.changed
+  when: (grub_vfio_removed.changed or grub_iommu_removed.changed) and ansible_os_family == "RedHat"
+
+- name: 重新生成 grub 配置（Debian）
+  shell: update-grub
+  become: true
+  args:
+    executable: /bin/bash
+  when: (grub_vfio_removed.changed or grub_iommu_removed.changed) and ansible_os_family == "Debian"
 
 - name: 重启系统
   reboot:

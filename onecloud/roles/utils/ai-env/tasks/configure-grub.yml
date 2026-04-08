@@ -12,13 +12,29 @@
   become: true
   when: grub_check.rc != 0
 
-- name: Update GRUB configuration
-  shell: grub2-mkconfig > /boot/efi/EFI/openEuler/grub.cfg
+- name: Detect GRUB config file path (RedHat)
+  shell: |
+    find /boot/efi/EFI -name grub.cfg -maxdepth 2 2>/dev/null | head -1 || echo "/boot/grub2/grub.cfg"
+  register: grub_cfg_path_result
+  changed_when: false
+  become: true
+  when: grub_check.rc != 0 and ansible_os_family == "RedHat"
+
+- name: Update GRUB configuration (RedHat)
+  shell: grub2-mkconfig -o {{ grub_cfg_path_result.stdout | trim }}
   become: true
   args:
     executable: /bin/bash
-  when: grub_check.rc != 0
-  register: grub_update_result
+  when: grub_check.rc != 0 and ansible_os_family == "RedHat"
+  register: grub_update_result_redhat
+
+- name: Update GRUB configuration (Debian)
+  shell: update-grub
+  become: true
+  args:
+    executable: /bin/bash
+  when: grub_check.rc != 0 and ansible_os_family == "Debian"
+  register: grub_update_result_debian
 
 - name: Reboot system after grub update
   reboot:
