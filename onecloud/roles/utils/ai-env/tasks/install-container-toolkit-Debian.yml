@@ -1,26 +1,44 @@
-- name: Add NVIDIA Container Toolkit GPG key
+- name: Install curl and gpg prerequisites (Debian)
+  apt:
+    name:
+      - curl
+      - gpg
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Add NVIDIA Container Toolkit GPG key (Debian)
   shell: |
-    curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg --yes
+    curl -fsSL https://mirrors.ustc.edu.cn/libnvidia-container/gpgkey | \
+      gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
   become: true
   args:
     executable: /bin/bash
 
-- name: Add NVIDIA Container Toolkit repository
+- name: Add NVIDIA Container Toolkit apt repository (Debian)
   shell: |
-    curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
-      sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+    curl -s -L https://mirrors.ustc.edu.cn/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+      sed 's#deb https://nvidia.github.io#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://mirrors.ustc.edu.cn#g' | \
       tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
   become: true
   args:
     executable: /bin/bash
 
-- name: Update apt cache
+- name: Update apt cache (Debian)
   apt:
     update_cache: yes
   become: true
 
-- name: Install NVIDIA Container Toolkit
-  apt:
-    name: nvidia-container-toolkit
-    state: present
+- name: Install NVIDIA Container Toolkit (Debian)
+  shell: |
+    export NVIDIA_CONTAINER_TOOLKIT_VERSION=1.17.8-1
+    apt install -y \
+      nvidia-container-toolkit=${NVIDIA_CONTAINER_TOOLKIT_VERSION} \
+      nvidia-container-toolkit-base=${NVIDIA_CONTAINER_TOOLKIT_VERSION} \
+      libnvidia-container-tools=${NVIDIA_CONTAINER_TOOLKIT_VERSION} \
+      libnvidia-container1=${NVIDIA_CONTAINER_TOOLKIT_VERSION}
   become: true
+  args:
+    executable: /bin/bash
+  environment:
+    DEBIAN_FRONTEND: noninteractive

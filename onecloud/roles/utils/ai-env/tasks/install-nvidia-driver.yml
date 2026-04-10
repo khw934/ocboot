@@ -146,6 +146,7 @@
   - name: Install NVIDIA driver with kernel source path
     shell: |
       cd /opt/nvidia
+      chmod +x {{ nvidia_driver_installer }}
       ./{{ nvidia_driver_installer }} --silent --accept-license --no-questions --kernel-source-path={{ kernel_source_path }}
     become: true
     args:
@@ -156,6 +157,7 @@
   - name: Install NVIDIA driver without kernel source path
     shell: |
       cd /opt/nvidia
+      chmod +x {{ nvidia_driver_installer }}
       ./{{ nvidia_driver_installer }} --silent --accept-license --no-questions
     become: true
     args:
