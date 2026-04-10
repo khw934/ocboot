@@ -66,6 +66,7 @@
       export TMPDIR=/opt/nvidia/tmp
       export TEMP=/opt/nvidia/tmp
       export TMP=/opt/nvidia/tmp
+      chmod +x {{ cuda_installer }}
       setsid bash -c "./{{ cuda_installer }} --silent --toolkit" < /dev/null > /tmp/cuda_install.log 2>&1 || {
         EXIT_CODE=$?
         cat /tmp/cuda_install.log
